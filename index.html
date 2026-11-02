@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d0a1a">
+<title>HALLOWEEN — ESCENA ANIMADA</title>
+<style>
+  :root { --cw: 1365; --ch: 700; --u: calc(max(100vw, 100vh * var(--cw) / var(--ch)) / var(--cw)); }
+  @supports (height: 100dvh) { :root { --u: calc(max(100dvw, 100dvh * var(--cw) / var(--ch)) / var(--cw)); } }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #0d0a1a; }
+  body { overscroll-behavior: none; }
+  /* LIENZO MAESTRO 1365 × 700: cubre toda la pantalla (recorta lo que sobre, centrado) */
+  #scene { position: absolute; left: 50%; top: 50%; width: max(100vw, calc(100vh * var(--cw) / var(--ch))); height: max(100vh, calc(100vw * var(--ch) / var(--cw))); overflow: hidden; background: #0d0a1a; transform: translate(-50%, -50%) translateZ(0); touch-action: manipulation; }
+  @supports (height: 100dvh) { #scene { width: max(100dvw, calc(100dvh * var(--cw) / var(--ch))); height: max(100dvh, calc(100dvw * var(--ch) / var(--cw))); } }
+  .layer { position: absolute; pointer-events: none; user-select: none; -webkit-user-select: none; }
+  .layer, .layer * { -webkit-user-drag: none; }
+  .in, .drift, .body, .beat, .cloudbox, .fogbox, .fogmove, .gloom, .face { position: absolute; inset: 0; }
+  .in { overflow: hidden; }
+  .in img { position: absolute; display: block; max-width: none; }
+  .screen { mix-blend-mode: screen; }
+  .cloudbox { filter: url(#cloudBoost); }
+  .fogbox { filter: url(#fogBoost); }
+
+  /* ---------- NIEBLA: deriva lenta y continua, respirando ---------- */
+  .fogmove { animation: fogDrift calc(var(--dur) * 0.45) ease-in-out var(--delay) infinite alternate; will-change: transform, opacity; }
+  @keyframes fogDrift {
+    from { transform: translate3d(calc(var(--u) * var(--drift) * -2.8), 0, 0); opacity: .35; }
+    50%  { opacity: .88; }
+    to   { transform: translate3d(calc(var(--u) * var(--drift) * 2.8), 0, 0); opacity: .4; }
+  }
+
+  /* 1. Mejora específica de la neblina inferior (izquierda a derecha fluida con opacidad gradual) */
+  #layer-nieblaB .fogmove {
+    animation: fogBottomLeftToRight 19s linear -5s infinite;
+    will-change: transform, opacity;
+  }
+  @keyframes fogBottomLeftToRight {
+    0%   { transform: translate3d(calc(var(--u) * -320), 0, 0); opacity: 0; }
+    16%  { opacity: .6; }
+    50%  { transform: translate3d(0, 0, 0); opacity: .95; }
+    84%  { opacity: .6; }
+    100% { transform: translate3d(calc(var(--u) * 320), 0, 0); opacity: 0; }
+  }
+
+  .fogbox .in { -webkit-mask-image: linear-gradient(to right, transparent 0, #000 18%, #000 82%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 22%, #000 78%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, transparent 0, #000 18%, #000 82%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 22%, #000 78%, transparent 100%); mask-composite: intersect; }
+  /* ---------- FONDO SOMBRÍO: nubarrones que avanzan y se oscurecen ---------- */
+  .gloom { animation: gloomDrift calc(var(--dur) * 0.42) ease-in-out var(--delay) infinite alternate; will-change: transform, opacity; backface-visibility: hidden; }
+  @keyframes gloomDrift {
+    0%   { transform: translate3d(calc(var(--u) * var(--drift) * -1.8), 0, 0); opacity: .42; }
+    50%  { opacity: .66; }
+    100% { transform: translate3d(calc(var(--u) * var(--drift) * 1.8), 0, 0); opacity: .48; }
+  }
+  #vig { position: absolute; inset: 0; z-index: 90; pointer-events: none; background: radial-gradient(ellipse at 50% 42%, transparent 38%, rgba(6,0,14,.45) 100%); }
+  #dark { position: absolute; inset: 0; z-index: 91; pointer-events: none; background: #12001f; animation: darkPulse 9s ease-in-out infinite alternate; }
+  @keyframes darkPulse { from { opacity: 0; } 40% { opacity: .16; } to { opacity: .05; } }
+
+  /* ---------- MURCIÉLAGOS: vuelo, flote y aleteo (cada uno recortado, sin duplicados) ---------- */
+  .bat .drift { animation: batFly var(--fly) cubic-bezier(.45,0,.55,1) var(--delay) infinite; will-change: transform; }
+  .bat .body  { animation: batBob 4.1s ease-in-out var(--delay) infinite alternate; will-change: transform; }
+  .bat .beat  { transform-origin: 50% 50%; animation: batBeat var(--dur) linear var(--delay) infinite; will-change: transform; }
+  @keyframes batBeat {
+    0% { transform: scale(1,1) translateY(0); } 4% { transform: scale(.45,1.1) translateY(-8%); } 8% { transform: scale(1.05,.8) translateY(4%); }
+    12% { transform: scale(.45,1.1) translateY(-8%); } 16% { transform: scale(1.05,.8) translateY(4%); } 20% { transform: scale(.45,1.1) translateY(-8%); }
+    24%, 100% { transform: scale(1,1) translateY(0); }
+  }
+  @keyframes batFly {
+    0%   { transform: translate(0,0) rotate(0) scale(1); }
+    15%  { transform: translate(calc(var(--u) * 40), calc(var(--u) * -30)) rotate(14deg) scale(1.08); }
+    35%  { transform: translate(calc(var(--u) * 95), calc(var(--u) * -8)) rotate(-8deg) scale(.92); }
+    55%  { transform: translate(calc(var(--u) * 70), calc(var(--u) * 36)) rotate(-16deg) scale(.88); }
+    75%  { transform: translate(calc(var(--u) * 15), calc(var(--u) * 20)) rotate(10deg) scale(1.04); }
+    100% { transform: translate(0,0) rotate(0) scale(1); }
+  }
+  @keyframes batBob { from { transform: translateY(calc(var(--u) * -14)) rotate(-3deg); } to { transform: translateY(calc(var(--u) * 14)) rotate(3deg); } }
+
+  /* ---------- CARAS DE CALABAZA: brillo y parpadeo ---------- */
+  .click { pointer-events: auto !important; cursor: pointer; }
+  .face { animation: faceGlow var(--dur) linear var(--delay) infinite; }
+  @keyframes faceGlow {
+    0%,100% { filter: brightness(1.05) drop-shadow(0 0 calc(var(--u) * 8) rgba(255,90,200,.65)); }
+    12% { filter: brightness(1.45) drop-shadow(0 0 calc(var(--u) * 16) rgba(255,110,220,.95)); }
+    28% { filter: brightness(.85) drop-shadow(0 0 calc(var(--u) * 6) rgba(255,80,190,.5)); }
+    44% { filter: brightness(1.3) drop-shadow(0 0 calc(var(--u) * 14) rgba(255,100,210,.85)); }
+    60% { filter: brightness(.95) drop-shadow(0 0 calc(var(--u) * 7) rgba(255,90,200,.6)); }
+    74% { filter: brightness(1.5) drop-shadow(0 0 calc(var(--u) * 18) rgba(255,120,225,1)); }
+    90%,92% { filter: brightness(.1) drop-shadow(0 0 0 rgba(255,90,200,0)); }
+    95% { filter: brightness(1.4) drop-shadow(0 0 calc(var(--u) * 16) rgba(255,110,220,.9)); }
+  }
+  /* ---------- RELÁMPAGO ---------- */
+  #flash { position: absolute; inset: 0; z-index: 300; opacity: 0; pointer-events: none; mix-blend-mode: screen;
+    background: radial-gradient(ellipse at 60% 25%, rgba(235,235,255,.95), rgba(190,190,255,.35) 55%, transparent 80%); }
+  #flash.active { animation: flash .8s ease-out forwards; }
+  @keyframes flash { 0%{opacity:0} 5%{opacity:1} 10%,15%{opacity:0} 20%{opacity:.8} 25%{opacity:.2} 35%{opacity:.6} 100%{opacity:0} }
+  #top-trigger, #bottom-trigger { position: fixed; left: 0; width: 100vw; height: 100px; z-index: 9999; cursor: pointer; }
+  #top-trigger { top: 0; } #bottom-trigger { bottom: 0; }
+  @media (prefers-reduced-motion: reduce) { #scene * { animation: none !important; } }
+  #edit-panel { display: none; position: fixed; top: 8px; right: 8px; width: 300px; z-index: 9999; background: rgba(10,5,20,.95); color: #ddd; font: 11px/1.4 ui-monospace, Menlo, monospace; border: 1px solid #00ffcc; border-radius: 8px; padding: 10px; }
+  #edit-panel select, #edit-panel button, #edit-panel textarea { width: 100%; margin-top: 6px; font: inherit; }
+  #edit-panel textarea { height: 140px; }
+
+  /* ---------- 2. SMILES EN LAS ESQUINAS SUPERIORES ---------- */
+  .corner-spider-zone {
+    position: fixed;
+    top: 78px; /* Margen vertical exacto de 78px desde la parte superior */
+    z-index: 95;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    display: flex;
+    align-items: flex-start;
+  }
+  .corner-spider-zone.left { left: 65px; }
+  .corner-spider-zone.right { right: 65px; }
+  .spider-rig {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translate3d(0, -160px, 0);
+    will-change: transform;
+  }
+  .spider-thread {
+    position: absolute;
+    bottom: calc(100% - 8px);
+    left: 50%;
+    width: 1.5px;
+    height: 300px;
+    background: #5c3a21; /* Hilo color café acorde a la araña */
+    transform: translateX(-50%);
+    pointer-events: none;
+    filter: drop-shadow(0 0 4px rgba(185, 68, 12, 0.36)) drop-shadow(0 0 9px rgba(130, 42, 5, 0.22));
+  }
+  .corner-spider-zone img {
+    display: block;
+    width: 62px; /* Ligeramente más pequeñas conservando proporción */
+    height: auto;
+    max-width: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    filter: drop-shadow(0 0 5px rgba(185, 68, 12, 0.36)) drop-shadow(0 0 11px rgba(130, 42, 5, 0.22));
+  }
+  @media (max-width: 600px) {
+    .corner-spider-zone.left { left: 32px; }
+    .corner-spider-zone.right { right: 32px; }
+    .corner-spider-zone img { width: 50px; }
+  }
+
+  /* ---------- LOGOTIPO CENTRAL INFERIOR CON GLOW PARPADEANTE ---------- */
+  #center-bottom-logo {
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 95;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+    width: auto;
+    height: auto;
+    max-width: min(260px, 28vw);
+    max-height: 58px;
+    object-fit: contain;
+    animation: logoFlickerGlow 7.2s linear infinite;
+    will-change: filter, opacity;
+  }
+  @keyframes logoFlickerGlow {
+    0%, 100% { filter: brightness(1.02) drop-shadow(0 0 6px rgba(255, 90, 200, 0.55)) drop-shadow(0 0 14px rgba(165, 60, 235, 0.38)); opacity: 0.94; }
+    15%      { filter: brightness(1.25) drop-shadow(0 0 12px rgba(255, 110, 220, 0.85)) drop-shadow(0 0 22px rgba(180, 70, 245, 0.6)); opacity: 1; }
+    30%      { filter: brightness(0.9) drop-shadow(0 0 5px rgba(255, 80, 190, 0.4)); opacity: 0.86; }
+    48%      { filter: brightness(1.18) drop-shadow(0 0 10px rgba(255, 100, 215, 0.78)) drop-shadow(0 0 18px rgba(165, 60, 235, 0.52)); opacity: 0.98; }
+    64%      { filter: brightness(0.96) drop-shadow(0 0 7px rgba(255, 90, 200, 0.5)); opacity: 0.9; }
+    78%      { filter: brightness(1.3) drop-shadow(0 0 14px rgba(255, 120, 225, 0.92)) drop-shadow(0 0 24px rgba(190, 80, 255, 0.7)); opacity: 1; }
+    88%, 90% { filter: brightness(0.45) drop-shadow(0 0 2px rgba(255, 90, 200, 0.15)); opacity: 0.55; }
+    93%      { filter: brightness(1.22) drop-shadow(0 0 12px rgba(255, 110, 220, 0.85)); opacity: 0.98; }
+  }
+  @media (max-width: 600px) {
+    #center-bottom-logo { max-width: 42vw; max-height: 40px; bottom: 12px; }
+  }
+
+  /* ---------- NOTAS MUSICALES TENEBROSAS FLOTANTES ---------- */
+  #spooky-notes-container {
+    position: fixed;
+    inset: 0;
+    z-index: 93;
+    pointer-events: none;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .spooky-note {
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: #07030c;
+    font-family: "Segoe UI Symbol", "Apple Symbols", "Noto Music", serif;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    opacity: 0;
+    filter: drop-shadow(0 0 3px rgba(255, 95, 215, 0.48)) drop-shadow(0 0 7px rgba(165, 55, 235, 0.32));
+    will-change: transform, opacity;
+  }
+
+  /* ---------- FIRMA SUTIL SUPERIOR CENTRAL ---------- */
+  #xatframe-sig {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 95;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    font: 500 8px/1.2 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    letter-spacing: 2.2px;
+    color: rgba(235, 215, 255, 0.055);
+    text-shadow: none;
+    white-space: nowrap;
+  }
+
+  /* ---------- 3. SMILE FLOTANTE CON EFECTO DE FANTASMA ---------- */
+  #ghost-boo-smile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 94;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+    width: auto;
+    height: auto;
+    opacity: 0;
+    filter: drop-shadow(0 0 9px rgba(255, 100, 220, 0.65)) drop-shadow(0 0 18px rgba(165, 60, 235, 0.45));
+    will-change: transform, opacity;
+  }
+</style>
+</head>
+<body>
+<div id="top-trigger"></div><div id="bottom-trigger"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="cloudBoost" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncA type="linear" slope="1.6"/></feComponentTransfer></filter>
+  <filter id="fogBoost" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncA type="linear" slope="1.5"/></feComponentTransfer></filter>
+</svg>
+<audio id="laugh" src="https://raw.githubusercontent.com/eamxat/Hallow-/main/laugh.mp3" preload="auto" playsinline></audio>
+<audio id="wolf" src="https://raw.githubusercontent.com/eamxat/imageshalloween/main/wolf.mp3" preload="auto" playsinline></audio>
+<div id="scene"><div id="vig"></div><div id="dark"></div><div id="flash"></div></div>
+<div id="edit-panel">
+  <b style="color:#00ffcc">Modo colocación (?edit=1)</b><br>
+  Arrastra en la escena para mover la capa elegida (las caras siguen a su calabaza). Flechas = 1 px (Shift = 10).
+  <select id="edit-layer"></select><div id="edit-readout" style="margin-top:6px"></div>
+  <button id="edit-copy">Copiar posiciones (JSON)</button><textarea id="edit-json" readonly></textarea>
+  Pega el JSON en la constante POS para fijarlo.
+</div>
+
+<script>
+const CW = 1365, CH = 700;   // lienzo maestro (full pantalla)
+const DW = 1400, DH = 759;   // coordenadas de diseño de las capas (como en tu Corel)
+const K = CW / DW, OY = CH - DH * K;   // escala uniforme; el exceso de cielo oscuro se recorta arriba
+
+// Archivos exportados de CorelDRAW (alojados en GitHub) → [archivo, ancho, alto]
+const F = {
+  cielo:     ["https://raw.githubusercontent.com/eamxat/imageshalloween/refs/heads/main/Curva%20(2).png", 1400, 759],
+  colina:    ["https://raw.githubusercontent.com/eamxat/imageshalloween/refs/heads/main/Curva%20(1).png", 1400, 237],
+  suelo:     ["https://raw.githubusercontent.com/eamxat/imageshalloween/refs/heads/main/Curva.png", 1400, 170],
+  arboles:   ["https://raw.githubusercontent.com/eamxat/imageshalloween/refs/heads/main/Grupo%20de%202%20objetos%20(3).png", 1329, 375],
+  cruces:    ["https://raw.githubusercontent.com/eamxat/imageshalloween/refs/heads/main/Grupo%20de%202%20objetos%20(2).png", 836, 213],
+  vallas:    ["https://raw.githubusercontent.com/eamxat/imageshalloween/refs/heads/main/Grupo%20de%202%20objetos.png", 1361, 132],
+  calabazas: ["https://raw.githubusercontent.com/eamxat/imageshalloween/refs/heads/main/Grupo%20de%203%20objetos%20(1).png", 1347, 187],
+  caras:     ["https://raw.githubusercontent.com/eamxat/imageshalloween/refs/heads/main/Grupo%20de%203%20objetos.png", 1289, 77],
+  murci:     ["https://raw.githubusercontent.com/eamxat/imageshalloween/refs/heads/main/Grupo%20de%203%20objetos%20(3).png", 1282, 77],
+  nubesA:    ["https://raw.githubusercontent.com/eamxat/imageshalloween/refs/heads/main/Grupo%20de%202%20objetos%20(1).png", 1329, 416],
+  nubesB:    ["https://raw.githubusercontent.com/eamxat/imageshalloween/refs/heads/main/Grupo%20de%203%20objetos%20(2).png", 1374, 401],
+  nieblaA:   ["https://raw.githubusercontent.com/eamxat/imageshalloween/refs/heads/main/Grupo%20de%202%20objetos%20(1).png", 1329, 416],
+  nieblaB:   ["https://raw.githubusercontent.com/eamxat/imageshalloween/refs/heads/main/Grupo%20de%202%20objetos%20(1).png", 1329, 306],
+  nubesC:    ["https://raw.githubusercontent.com/eamxat/imageshalloween/refs/heads/main/Grupo%20de%208%20objetos.png", 1325, 749]
+};
+
+// Capa: f = archivo, c = recorte [x,y,w,h], s = escala, x/y = posición en el lienzo, z = profundidad.
+const LAYERS = [
+  { id: "cielo",   f: "cielo",  x: 0, y: 0, z: 10 },
+  // Nubes del fondo (detrás de colina, murciélagos y todo lo demás): movimiento sutil y sombrío
+  { id: "nubesB",  f: "nubesB", x: 13, y: 120, z: 12, chain: ["cloudbox", "gloom"], dur: 70, delay: -20, drift: 28 },
+  { id: "nubesC",  f: "nubesC", c: [0, 0, 1325, 440], x: 35, y: 60, z: 13, chain: ["cloudbox", "gloom"], dur: 90, delay: -35, drift: 22 },
+  { id: "colina",  f: "colina", x: 0, y: 393, z: 20 },
+  { id: "arboles", f: "arboles", x: 62, y: 245, z: 30 },
+  // NEBLINA: solo Grupo de 2 objetos (1), sin escalar ni deformar, deriva horizontal con bordes difuminados
+  { id: "nieblaA", f: "nieblaA", x: 35, y: 300, z: 34, cls: "screen", chain: ["fogmove"], dur: 46, delay: -15, drift: 55 },
+  { id: "suelo",   f: "suelo",  x: 0, y: 589, z: 40 },
+  { id: "nieblaB", f: "nieblaB", x: 35, y: 535, z: 45, cls: "screen", chain: ["fogmove"], dur: 58, delay: -25, drift: -45 },
+  { id: "cruces",  f: "cruces", s: 1.03, x: 199, y: 377, z: 50 },
+  { id: "vallas",  f: "vallas", x: 25, y: 626, z: 55 },
+  { id: "murc1",   f: "murci", c: [0, 0, 71, 41],     s: .92, x: 68,   y: 188, z: 80, bat: [3.8, 22, -3] },
+  { id: "murc2",   f: "murci", c: [664, 50, 60, 27],  s: .9,  x: 733,  y: 240, z: 80, bat: [3.2, 17, -7] },
+  { id: "murc3",   f: "murci", c: [1226, 14, 56, 35], s: .9,  x: 1215, y: 205, z: 80, bat: [2.8, 14, -1] }
+];
+// Calabazas (posición medida sobre tu captura) + sus caras. Las caras se alinean por correlación con los huecos de cada calabaza:
+// el archivo de caras cae sobre el de calabazas desplazado (+11, +46) px a escala 1.
+const FACE_DX = 11, FACE_DY = 46;
+[
+  { id: "calabaza1", c: [0, 20, 100, 125],     s: .90, x: 47,     y: 509.4, face: [0, 0, 72, 72],      t: [6.4, -1.0] },
+  { id: "calabaza2", c: [1088, 43, 86, 100],   s: .87, x: 1138.5, y: 531.5, face: [1086, 16, 68, 62],  t: [7.6, -4.2] },
+  { id: "calabaza3", c: [1172, 0, 152, 155],   s: .92, x: 1221.3, y: 487,   face: [1178, 0, 116, 80],  t: [8.7, -2.6] }
+].forEach((P, i) => {
+  LAYERS.push({ id: P.id, f: "calabazas", c: P.c, s: P.s, x: P.x, y: P.y, z: 60, cls: "click" });
+  LAYERS.push({ id: "cara" + (i + 1), f: "caras", c: P.face, s: P.s, p: P.id, z: 65, cls: "click", chain: ["face"], dur: P.t[0], delay: P.t[1],
+    dx: (P.face[0] + FACE_DX - P.c[0]) * P.s, dy: (P.face[1] + FACE_DY - P.c[1]) * P.s });
+});
+const POS = {};   // posiciones fijadas desde ?edit=1: { "arboles": {"x":62,"y":245}, ... }
+
+const params = new URLSearchParams(location.search), EDIT = params.get("edit") === "1";
+const scene = document.getElementById("scene"), placed = {};
+const pct = (v, t) => (v / t * 100) + "%";
+function apply(p) {
+  const e = p.el; e.style.left = pct(p.x * K, CW); e.style.top = pct(p.y * K + OY, CH); e.style.width = pct(p.w * K, CW); e.style.height = pct(p.h * K, CH);
+  (p.kids || []).forEach(k => { k.x = p.x + k.dx; k.y = p.y + k.dy; apply(k); });
+}
+function makeEl(L) {
+  const [file, nw, nh] = F[L.f], [cx, cy, cw, ch] = L.c || [0, 0, nw, nh], s = L.s || 1;
+  const el = document.createElement("div"); el.className = "layer " + (L.cls || ""); el.id = "layer-" + L.id; el.style.zIndex = L.z;
+  ["dur", "delay", "drift"].forEach(k => { if (L[k] != null) el.style.setProperty("--" + k, L[k] + (k === "drift" ? "" : "s")); });
+  let chain = L.chain || [], host = el;
+  if (L.bat) { el.classList.add("bat"); el.style.setProperty("--dur", L.bat[0] + "s"); el.style.setProperty("--fly", L.bat[1] + "s"); el.style.setProperty("--delay", L.bat[2] + "s"); chain = ["drift", "body", "beat"]; }
+  chain.forEach(c => { const d = document.createElement("div"); d.className = c; host.appendChild(d); host = d; });
+  const crop = document.createElement("div"); crop.className = "in"; host.appendChild(crop);
+  const im = new Image(); im.src = file; im.alt = ""; im.draggable = false;
+  im.style.width = pct(nw, cw); im.style.height = pct(nh, ch); im.style.left = pct(-cx, cw); im.style.top = pct(-cy, ch);
+  crop.appendChild(im); if (L.flip) crop.style.transform = "scaleX(-1)";
+  if (L.cls && L.cls.includes("click")) { el.addEventListener("click", triggerScare); el.addEventListener("touchend", e => { e.preventDefault(); triggerScare(); }, { passive: false }); }
+  return { el, w: cw * s, h: ch * s };
+}
+LAYERS.forEach(L => {
+  const m = makeEl(L), p = { id: L.id, el: m.el, x: L.x, y: L.y, w: m.w, h: m.h, dx: L.dx, dy: L.dy, parent: L.p };
+  if (!L.p && POS[L.id]) { p.x = POS[L.id].x; p.y = POS[L.id].y; }
+  placed[L.id] = p;
+});
+LAYERS.forEach(L => { const p = placed[L.id]; if (L.p) { const m = placed[L.p]; p.x = m.x + L.dx; p.y = m.y + L.dy; (m.kids = m.kids || []).push(p); } });
+Object.values(placed).sort((a, b) => a.el.style.zIndex - b.el.style.zIndex).forEach(p => { apply(p); scene.appendChild(p.el); });
+
+function triggerScare() {
+  const a = document.getElementById(Math.random() < 0.5 ? "laugh" : "wolf"); a.volume = .25; a.currentTime = 0; a.play().catch(() => {});
+  const f = document.getElementById("flash"); f.classList.remove("active"); void f.offsetWidth; f.classList.add("active");
+}
+["top-trigger", "bottom-trigger"].forEach(id => { const t = document.getElementById(id);
+  t.addEventListener("click", triggerScare); t.addEventListener("touchend", e => { e.preventDefault(); triggerScare(); }, { passive: false }); });
+
+if (EDIT) {
+  document.getElementById("edit-panel").style.display = "block";
+  const sel = document.getElementById("edit-layer"), out = document.getElementById("edit-json"), ro = document.getElementById("edit-readout");
+  Object.keys(placed).filter(id => !placed[id].parent).forEach(id => { const o = document.createElement("option"); o.value = id; o.textContent = id; sel.appendChild(o); });
+  const refresh = () => {
+    Object.values(placed).forEach(q => q.el.style.outline = "");
+    const p = placed[sel.value]; if (p) { ro.textContent = "x " + Math.round(p.x) + "  y " + Math.round(p.y); p.el.style.outline = "2px dashed #00ffcc"; }
+    const o = {}; for (const id in placed) if (!placed[id].parent) o[id] = { x: Math.round(placed[id].x), y: Math.round(placed[id].y) };
+    out.value = JSON.stringify(o, null, 1);
+  };
+  const move = (dx, dy) => { const p = placed[sel.value]; if (!p) return; p.x += dx; p.y += dy; apply(p); refresh(); };
+  sel.onchange = refresh;
+  let last = null;
+  scene.addEventListener("pointerdown", e => { last = e; scene.setPointerCapture(e.pointerId); });
+  scene.addEventListener("pointermove", e => { if (!last) return; const r = scene.getBoundingClientRect(); move((e.clientX - last.clientX) / r.width * CW / K, (e.clientY - last.clientY) / r.height * CH / K); last = e; });
+  scene.addEventListener("pointerup", () => last = null);
+  window.addEventListener("keydown", e => { const s = e.shiftKey ? 10 : 1, d = { ArrowLeft: [-s, 0], ArrowRight: [s, 0], ArrowUp: [0, -s], ArrowDown: [0, s] }[e.key]; if (d) { e.preventDefault(); move(d[0], d[1]); } });
+  document.getElementById("edit-copy").onclick = () => { out.select(); document.execCommand("copy"); };
+  refresh();
+}
+</script>
+
+<!-- Firma sutil en la parte superior central -->
+<div id="xatframe-sig" aria-hidden="true">XATFRAME DESIGN EAM96</div>
+
+<!-- 2. Smiles en ambas esquinas superiores con margen de 78px e hilo café -->
+<div class="corner-spider-zone left" aria-hidden="true">
+  <div class="spider-rig">
+    <div class="spider-thread"></div>
+    <img src="https://gs.xat.com/a_(hallospider)_80" alt="" draggable="false">
+  </div>
+</div>
+<div class="corner-spider-zone right" aria-hidden="true">
+  <div class="spider-rig">
+    <div class="spider-thread"></div>
+    <img src="https://gs.xat.com/a_(hallospider)_80" alt="" draggable="false">
+  </div>
+</div>
+
+<!-- 3. Smile flotante con efecto de fantasma en los márgenes laterales -->
+<img id="ghost-boo-smile" src="https://raw.githubusercontent.com/eamxat/imageshalloween/refs/heads/main/a_(scaryboo)_80.webp" alt="" draggable="false" aria-hidden="true">
+
+<!-- Logotipo inferior central con glow parpadeante -->
+<img id="center-bottom-logo" src="https://raw.githubusercontent.com/eamxat/imageshalloween/refs/heads/main/logo2000.png" alt="" draggable="false" aria-hidden="true">
+
+<!-- Contenedor de notas musicales tenebrosas -->
+<div id="spooky-notes-container" aria-hidden="true"></div>
+
+<script>
+(function() {
+  // Bloqueo de F12, atajos de inspección y menú contextual
+  window.addEventListener("contextmenu", e => e.preventDefault());
+  window.addEventListener("keydown", e => {
+    if (
+      e.key === "F12" ||
+      e.keyCode === 123 ||
+      (e.ctrlKey && e.shiftKey && ["I", "i", "J", "j", "C", "c"].includes(e.key)) ||
+      (e.ctrlKey && ["U", "u"].includes(e.key))
+    ) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+  }, true);
+
+  const ghost = document.getElementById("ghost-boo-smile");
+  if (!ghost) return;
+  const rand = (min, max) => Math.random() * (max - min) + min;
+
+  // Evento aleatorio: las arañas bajan por izquierda y derecha desde fuera de la pantalla y desaparecen al subir sin fade
+  const spiderRigs = document.querySelectorAll(".corner-spider-zone .spider-rig");
+  if (spiderRigs.length) {
+    let lastSide = Math.random() < 0.5 ? 0 : 1;
+    function triggerRandomSpiderEvent() {
+      // Alterna garantizando que salgan tanto por izquierda como por derecha con variación natural
+      const nextSide = Math.random() < 0.72 ? (1 - lastSide) : lastSide;
+      lastSide = nextSide;
+      const chosenRig = spiderRigs[nextSide];
+      const hiddenY = -160; // Oculta arriba fuera de la pantalla (considerando top: 78px + alto de la araña)
+      const dropDist = rand(0, 58); // Baja hasta su posición de 78px o un poco más al azar
+      const downTime = rand(1500, 2600);
+      const holdTime = rand(900, 2200);
+      const upTime   = rand(1600, 2900);
+      const total    = downTime + holdTime + upTime;
+      const nextEventPause = rand(2200, 5200);
+
+      const anim = chosenRig.animate([
+        { transform: `translate3d(0, ${hiddenY}px, 0)`, offset: 0 },
+        { transform: `translate3d(0, ${dropDist}px, 0)`, offset: downTime / total },
+        { transform: `translate3d(0, ${dropDist}px, 0)`, offset: (downTime + holdTime) / total },
+        { transform: `translate3d(0, ${hiddenY}px, 0)`, offset: 1 }
+      ], {
+        duration: total,
+        easing: "ease-in-out",
+        fill: "forwards"
+      });
+
+      anim.onfinish = () => setTimeout(triggerRandomSpiderEvent, nextEventPause);
+    }
+    setTimeout(triggerRandomSpiderEvent, rand(900, 2000));
+  }
+
+  function animateGhost() {
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const w = ghost.naturalWidth || 80, h = ghost.naturalHeight || 80;
+    const isLeft = Math.random() < 0.5;
+
+    // Mantenerse cerca del margen izquierdo o derecho sin invadir el centro
+    const marginPad = rand(12, Math.max(24, Math.min(vw * 0.06, 75)));
+    const startX = isLeft ? marginPad : Math.max(vw - w - marginPad, vw * 0.82);
+
+    // Zona segura vertical (debajo de las arañas y su caída máxima para nunca interponerse)
+    const safeTopY = 235;
+    const maxBottomY = Math.max(safeTopY + 60, vh - h - 140);
+    const startY = rand(safeTopY, maxBottomY);
+
+    // Movimientos verticales lentos y ligeros desplazamientos laterales (respetando el tope superior)
+    const maxUp = Math.min(45, Math.max(0, startY - safeTopY));
+    const deltaY1 = rand(-maxUp, 45);
+    const deltaY2 = Math.max(safeTopY - startY, deltaY1 + rand(-35, 40));
+    const deltaX1 = (isLeft ? 1 : -1) * rand(8, 22);
+    const deltaX2 = (isLeft ? 1 : -1) * rand(-12, 18);
+
+    // Tiempos aleatorios para evitar repetición
+    const fadeIn = rand(1800, 3200);
+    const hold   = rand(4200, 7600);
+    const fadeOut = rand(1800, 3200);
+    const total  = fadeIn + hold + fadeOut;
+    const pause  = rand(2000, 5200);
+    const peakOpacity = rand(0.76, 0.94);
+
+    const anim = ghost.animate([
+      { transform: `translate3d(${startX}px, ${startY}px, 0)`, opacity: 0, offset: 0 },
+      { transform: `translate3d(${startX + deltaX1 * 0.5}px, ${startY + deltaY1 * 0.4}px, 0)`, opacity: peakOpacity, offset: fadeIn / total },
+      { transform: `translate3d(${startX + deltaX1}px, ${startY + deltaY1}px, 0)`, opacity: peakOpacity * 0.9, offset: (fadeIn + hold * 0.5) / total },
+      { transform: `translate3d(${startX + deltaX2}px, ${startY + deltaY2 * 0.8}px, 0)`, opacity: peakOpacity, offset: (fadeIn + hold) / total },
+      { transform: `translate3d(${startX + deltaX2 * 1.2}px, ${startY + deltaY2}px, 0)`, opacity: 0, offset: 1 }
+    ], {
+      duration: total,
+      easing: "ease-in-out",
+      fill: "forwards"
+    });
+
+    anim.onfinish = () => setTimeout(animateGhost, pause);
+  }
+
+  if (ghost.complete) {
+    setTimeout(animateGhost, 900);
+  } else {
+    ghost.addEventListener("load", () => setTimeout(animateGhost, 900), { once: true });
+  }
+
+  // Notas musicales aleatorias color negro con ligero glow rosado/morado subiendo en los márgenes laterales indicados
+  const notesBox = document.getElementById("spooky-notes-container");
+  if (notesBox) {
+    const symbols = ["♪", "♫", "♩", "♬"];
+    function spawnSpookyNote() {
+      const note = document.createElement("div");
+      note.className = "spooky-note";
+      note.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+      note.style.fontSize = Math.round(rand(12, 16)) + "px";
+      notesBox.appendChild(note);
+
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const isLeft = Math.random() < 0.5;
+      // Restringido exactamente a los recuadros laterales izquierdo y derecho (del 2% al 19% de cada borde)
+      const startX = isLeft
+        ? rand(vw * 0.02, vw * 0.19)
+        : rand(vw * 0.81, vw * 0.96);
+      const startY = rand(vh * 0.62, vh * 0.86);
+      const riseY  = rand(vh * 0.36, vh * 0.62);
+      const sway1  = rand(-16, 16);
+      const sway2  = -sway1 * rand(0.6, 1.1);
+      const rot1   = rand(-14, 14);
+      const rot2   = rand(-20, 20);
+      const dur    = rand(4500, 6800);
+      const maxOp  = rand(0.72, 0.95);
+
+      const anim = note.animate([
+        { transform: `translate3d(${startX}px, ${startY}px, 0) rotate(0deg) scale(0.85)`, opacity: 0, offset: 0 },
+        { transform: `translate3d(${startX + sway1 * 0.5}px, ${startY - riseY * 0.25}px, 0) rotate(${rot1 * 0.5}deg) scale(0.95)`, opacity: maxOp, offset: 0.2 },
+        { transform: `translate3d(${startX + sway1}px, ${startY - riseY * 0.65}px, 0) rotate(${rot1}deg) scale(1)`, opacity: maxOp * 0.88, offset: 0.62 },
+        { transform: `translate3d(${startX + sway2}px, ${startY - riseY}px, 0) rotate(${rot2}deg) scale(0.9)`, opacity: 0, offset: 1 }
+      ], {
+        duration: dur,
+        easing: "ease-in-out",
+        fill: "forwards"
+      });
+
+      anim.onfinish = () => {
+        note.remove();
+        setTimeout(spawnSpookyNote, rand(650, 1800));
+      };
+    }
+    // Varias notas a la vez (cada una se relanza sola al terminar), escalonadas para que no salgan juntas
+    for (let i = 0; i < 6; i++) {
+      setTimeout(spawnSpookyNote, 700 + i * 900 + rand(0, 400));
+    }
+  }
+})();
+</script>
+</body>
+</html>
